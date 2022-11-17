@@ -5,20 +5,62 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'components/autobee_bottom_naviagtionbar.dart';
 import 'components/door_lock.dart';
 import 'package:velocity_x/velocity_x.dart';
+import 'components/fuel_status.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   HomeScreen({Key? key}) : super(key: key);
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   final HomeController _controller = HomeController();
+
+  late AnimationController _fuelAnimationController;
+  late Animation<double> _animationFuel;
+  late Animation<double> _animationFuelStatus;
+
+  void setupFuelAnimation() {
+    _fuelAnimationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 600));
+
+    _animationFuel = CurvedAnimation(
+      parent: _fuelAnimationController,
+      curve: Interval(0.0, 0.5),
+    );
+
+    _animationFuelStatus = CurvedAnimation(
+        parent: _fuelAnimationController, 
+        curve: Interval(0.6, 1)
+    );
+  }
+
+  @override
+  void initState() {
+    setupFuelAnimation();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _fuelAnimationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-        animation: _controller,
+        animation: Listenable.merge([_controller, _fuelAnimationController]),
         builder: (context, _) {
           return Scaffold(
             bottomNavigationBar: AutoBeeBottomNavigationBar(
               onTap: (index) {
+                if (index == 1)
+                  _fuelAnimationController.forward();
+                else if (_controller.selectedBottomTab == 1 && index != 1)
+                  _fuelAnimationController.reverse(from: 0.7);
                 _controller.onBotytomNavigationTabChange(index);
               },
               selectedTab: _controller.selectedBottomTab,
@@ -154,6 +196,24 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+                  Opacity(
+                    opacity: _animationFuel.value,
+                    child: SvgPicture.asset(
+                      "assets/icons/fuel_tank.svg",
+                      width: constrains.maxWidth * 0.76,
+                    ),
+                  ),
+                  Positioned(
+                    top: 50 * (1 - _animationFuelStatus.value),
+                    height: constrains.maxHeight,
+                    width: constrains.maxWidth,
+                    child: Opacity(
+                      opacity: _animationFuelStatus.value,
+                      child: FuelStatus(
+                        constrains: constrains,
+                      ),
+                    ),
+                  )
                 ],
               );
             })),
