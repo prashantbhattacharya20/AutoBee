@@ -14,6 +14,7 @@ class HomeController extends ChangeNotifier {
   bool isSecondLeftDoorLock = true;
   bool isTrunkLock = true;
   bool isBonnetLock = true;
+  bool isCoolSelected = true;
 
   void updateFirstRightDoorLock() {
     isFirstRightDoorLock = !isFirstRightDoorLock;
@@ -44,4 +45,10 @@ class HomeController extends ChangeNotifier {
     isBonnetLock = !isBonnetLock;
     notifyListeners();
   }
+
+  void updateCoolSelectedTab() {
+    isCoolSelected = !isCoolSelected;
+    notifyListeners();
+  }
+
 }
