@@ -1,13 +1,14 @@
 import 'package:autobee/constants.dart';
 import 'package:autobee/home_controller.dart';
+import 'package:autobee/models/TyrePsi.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'components/autobee_bottom_naviagtionbar.dart';
 import 'components/door_lock.dart';
-import 'package:velocity_x/velocity_x.dart';
 import 'components/fuel_status.dart';
-import 'components/temp_btn.dart';
 import 'components/temp_details.dart';
+import 'components/tyre_psi_card.dart';
+import 'components/tyres.dart';
 
 class HomeScreen extends StatefulWidget {
   HomeScreen({Key? key}) : super(key: key);
@@ -26,6 +27,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late Animation<double> _animationCarShift;
   late Animation<double> _animationTempShowInfo;
   late Animation<double> _animationCoolGlow;
+  late AnimationController _tyreAnimationController;
+  late Animation<double> _animationTyre1Psi;
+  late Animation<double> _animationTyre2Psi;
+  late Animation<double> _animationTyre3Psi;
+  late Animation<double> _animationTyre4Psi;
+
+  late List<Animation<double>> _tyreAnimations;
 
   void setupFuelAnimation() {
     _fuelAnimationController =
@@ -50,14 +58,35 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _animationTempShowInfo = CurvedAnimation(
         parent: _tempAnimationController, curve: Interval(0.45, 0.65));
 
-     _animationCoolGlow = CurvedAnimation(
+    _animationCoolGlow = CurvedAnimation(
         parent: _tempAnimationController, curve: Interval(0.7, 1));
+  }
+
+  void setupTyreAnimation() {
+    _tyreAnimationController = AnimationController(
+        vsync: this, duration: Duration(milliseconds: 1200));
+
+    _animationTyre1Psi = CurvedAnimation(
+        parent: _tyreAnimationController, curve: Interval(0.34, 0.5));
+    _animationTyre2Psi = CurvedAnimation(
+        parent: _tyreAnimationController, curve: Interval(0.5, 0.66));
+    _animationTyre3Psi = CurvedAnimation(
+        parent: _tyreAnimationController, curve: Interval(0.66, 0.82));
+    _animationTyre4Psi = CurvedAnimation(
+        parent: _tyreAnimationController, curve: Interval(0.82, 1));
   }
 
   @override
   void initState() {
     setupFuelAnimation();
     setupTempAnimation();
+    setupTyreAnimation();
+    _tyreAnimations = [
+      _animationTyre1Psi,
+      _animationTyre2Psi,
+      _animationTyre3Psi,
+      _animationTyre4Psi
+    ];
     super.initState();
   }
 
@@ -65,14 +94,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void dispose() {
     _fuelAnimationController.dispose();
     _tempAnimationController.dispose();
+    _tyreAnimationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-        animation: Listenable.merge(
-            [_controller, _fuelAnimationController, _tempAnimationController]),
+        animation: Listenable.merge([
+          _controller,
+          _fuelAnimationController,
+          _tempAnimationController,
+          _tyreAnimationController
+        ]),
         builder: (context, _) {
           return Scaffold(
             bottomNavigationBar: AutoBeeBottomNavigationBar(
@@ -86,6 +120,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   _tempAnimationController.forward();
                 else if (_controller.selectedBottomTab == 3 && index != 3)
                   _tempAnimationController.reverse(from: 0.4);
+
+                if (index == 4)
+                  _tyreAnimationController.forward();
+                else if (_controller.selectedBottomTab == 4 && index != 4)
+                  _tyreAnimationController.reverse();
+
+                _controller.showTyreController(index);
+                _controller.tyreStatusController(index);
                 _controller.onBotytomNavigationTabChange(index);
               },
               selectedTab: _controller.selectedBottomTab,
@@ -94,36 +136,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               return Stack(
                 alignment: Alignment.center,
                 children: [
-                  AppBar(
-                    title: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        "Auto"
-                            .text
-                            .fontFamily('RaleWay')
-                            .xl5
-                            .bold
-                            .color(Vx.white)
-                            .make(),
-                        "Bee"
-                            .text
-                            .xl5
-                            .color(Color.fromARGB(255, 255, 253, 147))
-                            .make()
-                            .shimmer(
-                                primaryColor: Color.fromARGB(255, 238, 255, 86),
-                                secondaryColor:
-                                    Color.fromARGB(255, 49, 49, 49)),
-                        SvgPicture.asset(
-                          "assets/icons/bee.svg",
-                          color: Color.fromARGB(255, 243, 251, 253),
-                          height: 30,
-                        )
-                      ],
-                    ),
-                    backgroundColor: Colors.transparent,
-                    elevation: 0.0,
-                  ),
                   Positioned(
                     left: constrains.maxWidth / 2 * _animationCarShift.value,
                     height: constrains.maxHeight,
@@ -250,17 +262,38 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       right: -180 * (1 - _animationCoolGlow.value),
                       child: AnimatedSwitcher(
                         duration: defaultDuration,
-                        child: _controller.isCoolSelected ? Image.asset(
-                          "assets/images/Cool_glow_2.png",
-                          key: UniqueKey(),
-                          width: 200,
-                        ) : Image.asset(
-                          "assets/images/Hot_glow_4.png",
-                          key: UniqueKey(),
-                          width: 200,
+                        child: _controller.isCoolSelected
+                            ? Image.asset(
+                                "assets/images/Cool_glow_2.png",
+                                key: UniqueKey(),
+                                width: 200,
+                              )
+                            : Image.asset(
+                                "assets/images/Hot_glow_4.png",
+                                key: UniqueKey(),
+                                width: 200,
+                              ),
+                      )),
+                  if (_controller.isShowTyre) ...tyres(constrains),
+                  // if (_controller.isShowTyreStatus)
+                    GridView.builder(
+                      itemCount: 4,
+                      physics: NeverScrollableScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: defaultPadding,
+                        crossAxisSpacing: defaultPadding,
+                        childAspectRatio:
+                            constrains.maxWidth / constrains.maxHeight,
+                      ),
+                      itemBuilder: (context, index) => ScaleTransition(
+                        scale: _tyreAnimations[index],
+                        child: TyrePsiCard(
+                          isBottomTwoTyre: index > 1,
+                          tyrePsi: demoPsiList[index],
                         ),
-                      )
-                  )
+                      ),
+                    )
                 ],
               );
             })),
