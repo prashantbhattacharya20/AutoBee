@@ -4,10 +4,10 @@ import '../../constants.dart';
 class FuelStatus extends StatelessWidget {
   const FuelStatus({
     Key? key,
-    required this.constrains,
+    required this.constraints,
   }) : super(key: key);
 
-  final BoxConstraints constrains;
+  final BoxConstraints constraints;
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +19,7 @@ class FuelStatus extends StatelessWidget {
           style: TextStyle(fontSize: 16),
         ),
         SizedBox(
-          height: constrains.maxHeight * 0.12,
+          height: constraints.maxHeight * 0.12,
         ),
         Text(
           "Mileage - 12 Km/l",

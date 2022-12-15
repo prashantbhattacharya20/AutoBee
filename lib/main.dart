@@ -1,4 +1,10 @@
+import 'package:autobee/screens/fuel_screen.dart';
 import 'package:autobee/screens/home_screen.dart';
+import 'package:autobee/screens/hyper_screen.dart';
+import 'package:autobee/screens/lock_screen.dart';
+import 'package:autobee/screens/temp_screen.dart';
+import 'package:autobee/screens/tyre_screen.dart';
+import 'package:autobee/utils/routes.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -18,7 +24,15 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         scaffoldBackgroundColor: Colors.black,
       ),
-      home: HomeScreen(),
+      initialRoute: MyRoutes.homeRoute,
+      routes: {
+        "/": (context) => HomeScreen(),
+        "/lock": (context) => LockScreen(),
+        "/fuel": (context) => FuelScreen(),
+        "/hyper": (context) => HyperScreen(),
+        "/temp": (context) => TempScreen(),
+        "/tyre": (context) => TyreScreen(),
+      },
     );
   }
 }

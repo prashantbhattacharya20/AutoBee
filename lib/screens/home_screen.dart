@@ -1,303 +1,70 @@
-import 'package:autobee/constants.dart';
-import 'package:autobee/home_controller.dart';
-import 'package:autobee/models/TyrePsi.dart';
+import 'package:autobee/screens/fuel_screen.dart';
+import 'package:autobee/screens/hyper_screen.dart';
+import 'package:autobee/screens/lock_screen.dart';
+import 'package:autobee/screens/temp_screen.dart';
+import 'package:autobee/screens/tyre_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'components/autobee_bottom_naviagtionbar.dart';
-import 'components/door_lock.dart';
-import 'components/fuel_status.dart';
-import 'components/temp_details.dart';
-import 'components/tyre_psi_card.dart';
-import 'components/tyres.dart';
+import '../constants.dart';
 
 class HomeScreen extends StatefulWidget {
-  HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({Key? key}) : super(key: key);
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
-  final HomeController _controller = HomeController();
+class _HomeScreenState extends State<HomeScreen> {
+  List pages = [
+    LockScreen(),
+    FuelScreen(),
+    HyperScreen(),
+    TempScreen(),
+    TyreScreen()
+  ];
 
-  late AnimationController _fuelAnimationController;
-  late Animation<double> _animationFuel;
-  late Animation<double> _animationFuelStatus;
-  late AnimationController _tempAnimationController;
-  late Animation<double> _animationCarShift;
-  late Animation<double> _animationTempShowInfo;
-  late Animation<double> _animationCoolGlow;
-  late AnimationController _tyreAnimationController;
-  late Animation<double> _animationTyre1Psi;
-  late Animation<double> _animationTyre2Psi;
-  late Animation<double> _animationTyre3Psi;
-  late Animation<double> _animationTyre4Psi;
+  int selectedTab = 0;
 
-  late List<Animation<double>> _tyreAnimations;
-
-  void setupFuelAnimation() {
-    _fuelAnimationController =
-        AnimationController(vsync: this, duration: Duration(milliseconds: 600));
-
-    _animationFuel = CurvedAnimation(
-      parent: _fuelAnimationController,
-      curve: Interval(0.0, 0.5),
-    );
-
-    _animationFuelStatus = CurvedAnimation(
-        parent: _fuelAnimationController, curve: Interval(0.6, 1));
-  }
-
-  void setupTempAnimation() {
-    _tempAnimationController = AnimationController(
-        vsync: this, duration: Duration(milliseconds: 1500));
-
-    _animationCarShift = CurvedAnimation(
-        parent: _tempAnimationController, curve: Interval(0.2, 0.4));
-
-    _animationTempShowInfo = CurvedAnimation(
-        parent: _tempAnimationController, curve: Interval(0.45, 0.65));
-
-    _animationCoolGlow = CurvedAnimation(
-        parent: _tempAnimationController, curve: Interval(0.7, 1));
-  }
-
-  void setupTyreAnimation() {
-    _tyreAnimationController = AnimationController(
-        vsync: this, duration: Duration(milliseconds: 1200));
-
-    _animationTyre1Psi = CurvedAnimation(
-        parent: _tyreAnimationController, curve: Interval(0.34, 0.5));
-    _animationTyre2Psi = CurvedAnimation(
-        parent: _tyreAnimationController, curve: Interval(0.5, 0.66));
-    _animationTyre3Psi = CurvedAnimation(
-        parent: _tyreAnimationController, curve: Interval(0.66, 0.82));
-    _animationTyre4Psi = CurvedAnimation(
-        parent: _tyreAnimationController, curve: Interval(0.82, 1));
-  }
-
-  @override
-  void initState() {
-    setupFuelAnimation();
-    setupTempAnimation();
-    setupTyreAnimation();
-    _tyreAnimations = [
-      _animationTyre1Psi,
-      _animationTyre2Psi,
-      _animationTyre3Psi,
-      _animationTyre4Psi
-    ];
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    _fuelAnimationController.dispose();
-    _tempAnimationController.dispose();
-    _tyreAnimationController.dispose();
-    super.dispose();
+  void onTap(int index) {
+    setState(() {
+      selectedTab = index;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-        animation: Listenable.merge([
-          _controller,
-          _fuelAnimationController,
-          _tempAnimationController,
-          _tyreAnimationController
-        ]),
-        builder: (context, _) {
-          return Scaffold(
-            bottomNavigationBar: AutoBeeBottomNavigationBar(
-              onTap: (index) {
-                if (index == 1)
-                  _fuelAnimationController.forward();
-                else if (_controller.selectedBottomTab == 1 && index != 1)
-                  _fuelAnimationController.reverse(from: 0.7);
-
-                if (index == 3)
-                  _tempAnimationController.forward();
-                else if (_controller.selectedBottomTab == 3 && index != 3)
-                  _tempAnimationController.reverse(from: 0.4);
-
-                if (index == 4)
-                  _tyreAnimationController.forward();
-                else if (_controller.selectedBottomTab == 4 && index != 4)
-                  _tyreAnimationController.reverse();
-
-                _controller.showTyreController(index);
-                _controller.tyreStatusController(index);
-                _controller.onBotytomNavigationTabChange(index);
-              },
-              selectedTab: _controller.selectedBottomTab,
-            ),
-            body: SafeArea(child: LayoutBuilder(builder: (context, constrains) {
-              return Stack(
-                alignment: Alignment.center,
-                children: [
-                  Positioned(
-                    left: constrains.maxWidth / 2 * _animationCarShift.value,
-                    height: constrains.maxHeight,
-                    width: constrains.maxWidth,
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                          vertical: constrains.maxHeight * 0.1),
-                      child: SvgPicture.asset(
-                        "assets/icons/Car.svg",
-                        width: double.infinity,
-                      ),
-                    ),
+    return Scaffold(
+      body: pages[selectedTab],
+      bottomNavigationBar: Theme(
+        data: Theme.of(context).copyWith(canvasColor: Colors.black),
+        child: BottomNavigationBar(
+          onTap: onTap,
+          currentIndex: selectedTab,
+          unselectedFontSize: 0,
+          selectedFontSize: 0,
+          items: List.generate(
+              navIconsSrc.length,
+              (index) => BottomNavigationBarItem(
+                  icon: SvgPicture.asset(
+                    navIconsSrc[index],
+                    height: index == 1 || index == 2 ? 46 : null,
+                    color: index == selectedTab
+                        ? index == 2
+                            ? Color.fromARGB(255, 255, 120, 110)
+                            : primaryColor
+                        : Colors.white54,
                   ),
-                  AnimatedPositioned(
-                    duration: defaultDuration,
-                    top: 375,
-                    right: _controller.selectedBottomTab == 0
-                        ? constrains.maxWidth * 0.05
-                        : constrains.maxWidth / 2,
-                    child: AnimatedOpacity(
-                      duration: defaultDuration,
-                      opacity: _controller.selectedBottomTab == 0 ? 1 : 0,
-                      child: DoorLock(
-                        isLock: _controller.isFirstRightDoorLock,
-                        press: _controller.updateFirstRightDoorLock,
-                      ),
-                    ),
-                  ),
-                  AnimatedPositioned(
-                    duration: defaultDuration,
-                    top: 375,
-                    left: _controller.selectedBottomTab == 0
-                        ? constrains.maxWidth * 0.05
-                        : constrains.maxWidth / 2,
-                    child: AnimatedOpacity(
-                      duration: defaultDuration,
-                      opacity: _controller.selectedBottomTab == 0 ? 1 : 0,
-                      child: DoorLock(
-                        isLock: _controller.isFirstLeftDoorLock,
-                        press: _controller.updateFirstLeftDoorLock,
-                      ),
-                    ),
-                  ),
-                  AnimatedPositioned(
-                    duration: defaultDuration,
-                    top: 500,
-                    right: _controller.selectedBottomTab == 0
-                        ? constrains.maxWidth * 0.05
-                        : constrains.maxWidth / 2,
-                    child: AnimatedOpacity(
-                      duration: defaultDuration,
-                      opacity: _controller.selectedBottomTab == 0 ? 1 : 0,
-                      child: DoorLock(
-                        isLock: _controller.isSecondRightDoorLock,
-                        press: _controller.updateSecondRightDoorLock,
-                      ),
-                    ),
-                  ),
-                  AnimatedPositioned(
-                    duration: defaultDuration,
-                    top: 500,
-                    left: _controller.selectedBottomTab == 0
-                        ? constrains.maxWidth * 0.05
-                        : constrains.maxWidth / 2,
-                    child: AnimatedOpacity(
-                      duration: defaultDuration,
-                      opacity: _controller.selectedBottomTab == 0 ? 1 : 0,
-                      child: DoorLock(
-                        isLock: _controller.isSecondLeftDoorLock,
-                        press: _controller.updateSecondLeftDoorLock,
-                      ),
-                    ),
-                  ),
-                  AnimatedPositioned(
-                    duration: defaultDuration,
-                    top: _controller.selectedBottomTab == 0 ? 140 : 350,
-                    child: AnimatedOpacity(
-                      duration: defaultDuration,
-                      opacity: _controller.selectedBottomTab == 0 ? 1 : 0,
-                      child: DoorLock(
-                        isLock: _controller.isBonnetLock,
-                        press: _controller.updateBonnetLock,
-                      ),
-                    ),
-                  ),
-                  AnimatedPositioned(
-                    duration: defaultDuration,
-                    bottom: _controller.selectedBottomTab == 0 ? 140 : 240,
-                    child: AnimatedOpacity(
-                      duration: defaultDuration,
-                      opacity: _controller.selectedBottomTab == 0 ? 1 : 0,
-                      child: DoorLock(
-                        isLock: _controller.isTrunkLock,
-                        press: _controller.updateTrunkLock,
-                      ),
-                    ),
-                  ),
-                  Opacity(
-                    opacity: _animationFuel.value,
-                    child: SvgPicture.asset(
-                      "assets/icons/fuel_tank.svg",
-                      width: constrains.maxWidth * 0.76,
-                    ),
-                  ),
-                  Positioned(
-                    top: 50 * (1 - _animationFuelStatus.value),
-                    height: constrains.maxHeight,
-                    width: constrains.maxWidth,
-                    child: Opacity(
-                      opacity: _animationFuelStatus.value,
-                      child: FuelStatus(
-                        constrains: constrains,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                      height: constrains.maxHeight,
-                      width: constrains.maxWidth,
-                      top: 60 * (1 - _animationTempShowInfo.value),
-                      child: Opacity(
-                          opacity: _animationTempShowInfo.value,
-                          child: TempDetails(controller: _controller))),
-                  Positioned(
-                      right: -180 * (1 - _animationCoolGlow.value),
-                      child: AnimatedSwitcher(
-                        duration: defaultDuration,
-                        child: _controller.isCoolSelected
-                            ? Image.asset(
-                                "assets/images/Cool_glow_2.png",
-                                key: UniqueKey(),
-                                width: 200,
-                              )
-                            : Image.asset(
-                                "assets/images/Hot_glow_4.png",
-                                key: UniqueKey(),
-                                width: 200,
-                              ),
-                      )),
-                  if (_controller.isShowTyre) ...tyres(constrains),
-                  // if (_controller.isShowTyreStatus)
-                    GridView.builder(
-                      itemCount: 4,
-                      physics: NeverScrollableScrollPhysics(),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: defaultPadding,
-                        crossAxisSpacing: defaultPadding,
-                        childAspectRatio:
-                            constrains.maxWidth / constrains.maxHeight,
-                      ),
-                      itemBuilder: (context, index) => ScaleTransition(
-                        scale: _tyreAnimations[index],
-                        child: TyrePsiCard(
-                          isBottomTwoTyre: index > 1,
-                          tyrePsi: demoPsiList[index],
-                        ),
-                      ),
-                    )
-                ],
-              );
-            })),
-          );
-        });
+                  label: "")),
+        ),
+      ),
+    );
   }
 }
+
+List<String> navIconsSrc = [
+  "assets/icons/Lock.svg",
+  "assets/icons/gas.svg",
+  "assets/icons/lightning.svg",
+  "assets/icons/Temp.svg",
+  "assets/icons/Tyre.svg",
+];
